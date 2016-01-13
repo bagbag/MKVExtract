@@ -42,8 +42,8 @@ public:
 
     explicit Unrar(QString binaryPath);
     void setBinary(QString binaryPath);
-    void extract(QFileInfo rarFile, QString password, bool fullPath, QDir extractPath = QDir("."));
-    void extract(QFileInfo rarFile, QString password, bool fullPath, QFileInfoList files, QDir extractPath = QDir("."));
+    void extract(QFileInfo rarFile, QString password, bool fullPath, bool overwrite, QDir extractPath = QDir("."));
+    void extract(QFileInfo rarFile, QString password, bool fullPath, QFileInfoList files, bool overwrite, QDir extractPath = QDir("."));
     QList<ContentInfo> listContents(QFileInfo rarFile, QString password, bool includeDirectories);
     bool hasPassword(QFileInfo rarFile);
     QString crackPasswort(QFileInfo rarFile, QStringList passwordList);

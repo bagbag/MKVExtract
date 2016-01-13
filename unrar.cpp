@@ -18,21 +18,21 @@ void Unrar::setBinary(QString binaryPath)
     _binaryPath = binaryPath;
 }
 
-void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QDir extractPath)
+void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, bool overwrite, QDir extractPath)
 {
     QStringList arguments;
-    arguments << (fullPath ? "x" : "e") << "-y" << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath() << extractPath.absolutePath() + "/";
+    arguments << (fullPath ? "x" : "e") << "-y" << "-o" + QString(overwrite ? "+" : "-") << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath() << extractPath.absolutePath() + "/";
 
     runProcess(arguments, rarFile.dir(), true);
 }
 
-void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QFileInfoList files, QDir extractPath)
+void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QFileInfoList files, bool overwrite, QDir extractPath)
 {
     if (files.length() == 0)
         return;
 
     QStringList arguments;
-    arguments << (fullPath ? "x" : "e") << "-y" << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath();
+    arguments << (fullPath ? "x" : "e") << "-y" << "-o" + QString(overwrite ? "+" : "-") << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath();
     if (files.length() > 0)
     {
         foreach (QFileInfo file, files)

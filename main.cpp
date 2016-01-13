@@ -82,6 +82,8 @@ int main(int argc, char *argv[])
         ExtractMovies(baseRarFile, outputDir, passwordList);
     }
 
+    qDebug() << "\n\nMKVExtractor: DONE";
+
     QCoreApplication::quit();
     return a.exec();
 }
@@ -121,14 +123,15 @@ void ExtractMovies(QFileInfo rarFile, QDir path, QStringList passwordList)
     }
 
     QFileInfoList subRars = Helper::getRarFiles(fileNames, false);
-    QDir extractDir = QDir(rarFile.absoluteDir().absolutePath() + "/extracted-" + rarFile.completeBaseName() + "/");
+    QRegularExpression regex(R"/((?<name>.*?)(\.part\d+)?\.(rar|r\d+)?)/");
+    QDir extractDir = QDir(path.absolutePath() + "/mkvextracttmp/" + regex.match(rarFile.fileName()).captured("name") + "/");
 
     if (!subRars.isEmpty())
-        unrar.extract(rarFile, password, true, subRars, extractDir);
+        unrar.extract(rarFile, password, true, subRars, false, extractDir);
 
     QFileInfoList extractedSubRars = Helper::getRarFiles(Helper::getFiles(extractDir, false, true), true);
     foreach (QFileInfo extractedSubRar, extractedSubRars)
         ExtractMovies(extractedSubRar, path, passwordList);
 
-    unrar.extract(rarFile, password, false, movieFiles, path);
+    unrar.extract(rarFile, password, false, movieFiles, false, path);
 }
