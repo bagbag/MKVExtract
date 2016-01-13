@@ -64,7 +64,7 @@ QList<Unrar::ContentInfo> Unrar::listContents(QFileInfo rarFile, QString passwor
 {
     if (!QFileInfo(rarFile).exists())
     {
-        qDebug() << "(Unrar::listContents): File does not exist";
+        qDebug() << "(Unrar::listContents): File" << rarFile.absoluteFilePath() << "does not exist";
         return QList<Unrar::ContentInfo>();
     }
 
