@@ -60,11 +60,8 @@ int main(int argc, char *argv[])
            return EXIT_FAILURE;
        }
 
-
        QString content = pf.readAll();
        QStringList lines = content.split(QRegularExpression("\\r?\\n"), QString::SkipEmptyParts);
-
-
        passwordList << lines;
     }
 
@@ -76,7 +73,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-
     QFileInfoList files = Helper::getFiles(inputDir, true, true);
     QFileInfoList baseRarFiles = Helper::getRarFiles(files, true);
 
@@ -85,8 +81,6 @@ int main(int argc, char *argv[])
         qDebug() << "Taking a look at" << baseRarFile.absoluteFilePath();
         ExtractMovies(baseRarFile, outputDir, passwordList);
     }
-
-    qDebug() << "Done.";
 
     QCoreApplication::quit();
     return a.exec();

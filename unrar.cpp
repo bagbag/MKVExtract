@@ -78,17 +78,20 @@ QList<Unrar::ContentInfo> Unrar::listContents(QFileInfo rarFile, QString passwor
     process.setWorkingDirectory(rarFile.absolutePath());
 
     process.start();
-
     process.waitForFinished();
 
     QString output(process.readAll());
 
-    QStringList split = output.split("\r\n\r\n", QString::SkipEmptyParts);
+    QStringList split = output.split(QRegularExpression("\r?\n\r?\n"), QString::SkipEmptyParts);
+
+    if (split.length() <= 2)
+        return QList<Unrar::ContentInfo>();
+
     split.removeFirst();
     split.removeFirst(); //remove Copyright etc.
     split.removeDuplicates();
 
-    QHash<QString,Unrar::ContentInfo> contentInfos;
+    QHash<QString, Unrar::ContentInfo> contentInfos;
 
     QRegularExpression regex(CONTENT_INFO_PATTERN);
     foreach (QString entry, split)
