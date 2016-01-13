@@ -20,18 +20,10 @@ void Unrar::setBinary(QString binaryPath)
 
 void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QDir extractPath)
 {
-    QProcess process;
-    process.setProgram(_binaryPath);
-
     QStringList arguments;
     arguments << (fullPath ? "x" : "e") << "-y" << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath() << extractPath.absolutePath() + "/";
 
-    process.setArguments(arguments);
-    process.setWorkingDirectory(rarFile.absolutePath());
-    process.setProcessChannelMode(QProcess::ForwardedChannels);
-    process.start();
-
-    process.waitForFinished(10000000);
+    runProcess(arguments, rarFile.dir(), true);
 }
 
 void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QFileInfoList files, QDir extractPath)
@@ -39,25 +31,19 @@ void Unrar::extract(QFileInfo rarFile, QString password, bool fullPath, QFileInf
     if (files.length() == 0)
         return;
 
-    QProcess process;
-    process.setProgram(_binaryPath);
-
     QStringList arguments;
     arguments << (fullPath ? "x" : "e") << "-y" << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath();
     if (files.length() > 0)
+    {
         foreach (QFileInfo file, files)
         {
             arguments << file.filePath();
         }
+    }
 
     arguments << extractPath.absolutePath() + "/";
 
-    process.setArguments(arguments);
-    process.setWorkingDirectory(rarFile.absolutePath());
-    process.setProcessChannelMode(QProcess::ForwardedChannels);
-    process.start();
-
-    process.waitForFinished(10000000);
+    runProcess(arguments, rarFile.dir(), true);
 }
 
 QList<Unrar::ContentInfo> Unrar::listContents(QFileInfo rarFile, QString password, bool includeDirectories)
@@ -68,19 +54,10 @@ QList<Unrar::ContentInfo> Unrar::listContents(QFileInfo rarFile, QString passwor
         return QList<Unrar::ContentInfo>();
     }
 
-    QProcess process;
-    process.setProgram(_binaryPath);
-
     QStringList arguments;
     arguments << "lt" << "-v" << "-p" + (password.isEmpty() ? "-" : password) << rarFile.absoluteFilePath();
 
-    process.setArguments(arguments);
-    process.setWorkingDirectory(rarFile.absolutePath());
-
-    process.start();
-    process.waitForFinished();
-
-    QString output(process.readAll());
+    QString output = runProcess(arguments, rarFile.dir(), false);
 
     QStringList split = output.split(QRegularExpression("\r?\n\r?\n"), QString::SkipEmptyParts);
 
@@ -155,41 +132,20 @@ QList<Unrar::ContentInfo> Unrar::listContents(QFileInfo rarFile, QString passwor
 
 bool Unrar::hasPassword(QFileInfo rarFile)
 {
-    QProcess process;
-    process.setProgram(_binaryPath);
-
     QStringList arguments;
     arguments << "lt" << "-v" << "-p-" << rarFile.absoluteFilePath();
 
-    process.setArguments(arguments);
-    process.setWorkingDirectory(rarFile.absolutePath());
+    QString output = runProcess(arguments, rarFile.dir(), false);
 
-    process.start();
-    process.waitForFinished();
-
-    QString output(process.readAll());
-
-    bool hasPass = output.contains("Flags: encrypted") || output.contains("The specified password is incorrect.") || output.contains(QRegularExpression(R"/(Details: RAR \d, .*?encrypted headers)/"));
-
-    return hasPass;
+    return output.contains("Flags: encrypted") || output.contains("The specified password is incorrect.") || output.contains(QRegularExpression(R"/(Details: RAR \d, .*?encrypted headers)/"));
 }
 
 QString Unrar::crackPasswort(QFileInfo rarFile, QStringList passwordList)
 {
-    QProcess process;
-    process.setProgram(_binaryPath);
-
     QStringList arguments;
     arguments << "lt" << "-v" << "-p-" << rarFile.absoluteFilePath();
 
-    process.setArguments(arguments);
-    process.setWorkingDirectory(rarFile.dir().absolutePath());
-
-    process.start();
-
-    process.waitForFinished();
-
-    QString output(process.readAll());
+    QString output = runProcess(arguments, rarFile.dir(), false);
 
     bool encryptedHeaders = output.contains(QRegularExpression(R"/(Details: RAR \d, .*?encrypted headers)/"));
 
@@ -212,28 +168,33 @@ QString Unrar::crackPasswort(QFileInfo rarFile, QStringList passwordList)
     foreach (QString password, passwordList)
     {
         qDebug() << "testing password: " << password;
-        QProcess process;
-        process.setProgram(_binaryPath);
 
         QStringList arguments;
         arguments << "t" << "-p" + password << rarFile.absoluteFilePath();
         if (!encryptedHeaders)
-        {
             arguments << smallestFile;
-        }
-        process.setArguments(arguments);
-        process.setWorkingDirectory(rarFile.dir().absolutePath());
 
-        process.start();
-        process.waitForFinished();
-
-        QString output(process.readAll());
+        QString output = runProcess(arguments, rarFile.dir(), false);
 
         if (output.trimmed().endsWith("All OK"))
-        {
             return password;
-        }
     }
 
     return "";
+}
+
+QString Unrar::runProcess(QStringList arguments, QDir workingDir, bool forwardChannels)
+{
+    QProcess process;
+    process.setProgram(_binaryPath);
+
+    process.setArguments(arguments);
+    process.setWorkingDirectory(workingDir.absolutePath());
+    if (forwardChannels)
+        process.setProcessChannelMode(QProcess::ForwardedChannels);
+    process.start();
+
+    process.waitForFinished(10000000);
+
+    return QString(process.readAll());
 }

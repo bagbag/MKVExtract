@@ -47,6 +47,7 @@ public:
     QList<ContentInfo> listContents(QFileInfo rarFile, QString password, bool includeDirectories);
     bool hasPassword(QFileInfo rarFile);
     QString crackPasswort(QFileInfo rarFile, QStringList passwordList);
+    QString runProcess(QStringList arguments, QDir workingDir, bool forwardChannels);
 
 signals:
 
